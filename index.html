@@ -2,34 +2,56 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Math Survivor: Professional Rankings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Survivor: Professional UI</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; overflow: hidden; background: #0f0f12; font-family: 'Kanit', sans-serif; color: white; }
-        #overlay { position: absolute; width: 100%; height: 100%; background: rgba(15,15,18,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; }
-        canvas { display: none; background: #1a1a1d; }
+        body { margin: 0; overflow: hidden; background: #0f0f12; font-family: 'Kanit', sans-serif; color: white; touch-action: none; }
         
-        .panel { background: #1e1e24; padding: 25px; border-radius: 20px; border: 2px solid #4a90e2; width: 450px; box-shadow: 0 0 30px rgba(74,144,226,0.2); }
-        input { padding: 12px; font-size: 18px; border-radius: 8px; border: 2px solid #333; width: 80%; margin-bottom: 20px; text-align: center; background: #0f0f12; color: white; }
-        
-        .mode-btn { padding: 12px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; color: white; flex: 1; transition: 0.2s; }
-        .easy { background: #2ecc71; } .medium { background: #f1c40f; color: #000; } .hard { background: #e74c3c; }
-        .mode-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        /* สไตล์พื้นฐานของเมนู */
+        #overlay, #game-over-screen { 
+            position: absolute; width: 100%; height: 100%; 
+            background: rgba(15,15,18,0.98); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 100; text-align: center; 
+        }
 
-        .rank-tabs { display: flex; gap: 5px; margin-top: 20px; background: #0f0f12; padding: 5px; border-radius: 10px; }
-        .tab { flex: 1; padding: 8px; cursor: pointer; font-size: 14px; border-radius: 5px; opacity: 0.5; }
+        /* ซ่อนหน้า Game Over ไว้ก่อน */
+        #game-over-screen { display: none; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
+        
+        .panel { background: #1e1e24; padding: 30px; border-radius: 24px; border: 2px solid #4a90e2; width: 85%; max-width: 400px; box-shadow: 0 0 50px rgba(74,144,226,0.2); }
+        
+        input { padding: 12px; font-size: 18px; border-radius: 8px; border: 2px solid #333; width: 80%; margin-bottom: 15px; text-align: center; background: #0f0f12; color: white; }
+        
+        .btn { padding: 15px 30px; font-size: 18px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; text-transform: uppercase; }
+        .btn-restart { background: #4a90e2; width: 100%; margin-top: 20px; box-shadow: 0 4px 15px rgba(74,144,226,0.4); }
+        .btn-restart:active { transform: scale(0.95); }
+
+        .mode-btn { padding: 12px; font-size: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; color: white; flex: 1; }
+        .easy { background: #2ecc71; } .medium { background: #f1c40f; color: #000; } .hard { background: #e74c3c; }
+
+        .rank-tabs { display: flex; gap: 5px; margin-top: 15px; background: #0f0f12; padding: 5px; border-radius: 10px; }
+        .tab { flex: 1; padding: 6px; cursor: pointer; font-size: 12px; border-radius: 5px; opacity: 0.5; }
         .tab.active { opacity: 1; background: #333; border: 1px solid #4a90e2; }
 
-        #leaderboard { margin-top: 15px; width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        #leaderboard th { border-bottom: 2px solid #333; padding-bottom: 10px; color: #4a90e2; }
-        #leaderboard td { padding: 10px; border-bottom: 1px solid #222; }
-        .gold { color: #f1c40f; font-weight: bold; }
+        #leaderboard { margin-top: 10px; width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        #leaderboard td { padding: 8px; border-bottom: 1px solid #222; }
 
-        #hud { position: fixed; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #question-zone { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; width: 100%; display: none; }
-        #question-display { font-size: 38px; color: #f1c40f; margin-bottom: 15px; text-shadow: 2px 2px 10px #000; background: rgba(0,0,0,0.7); padding: 15px 40px; border-radius: 50px; border: 1px solid #4a90e2; }
-        .choice-btn { padding: 15px 45px; font-size: 26px; cursor: pointer; border-radius: 12px; border: none; background: #2c3e50; color: white; margin: 0 10px; box-shadow: 0 5px 0 #1a252f; }
-        .choice-btn:active { transform: translateY(3px); box-shadow: none; }
+        /* Notification */
+        #notif-container { position: fixed; top: 150px; left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .notif { background: rgba(0, 0, 0, 0.8); color: #fff; padding: 10px 25px; border-radius: 50px; font-size: 16px; border: 1px solid #4a90e2; animation: slideUp 0.4s ease-out, fadeOut 0.5s forwards 2s; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+
+        #hud { position: fixed; top: 15px; left: 15px; z-index: 10; pointer-events: none; font-size: 20px; font-weight: bold; color: #4a90e2; }
+        #question-zone { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; width: 95%; display: none; }
+        #question-display { font-size: 32px; color: #f1c40f; margin-bottom: 15px; background: rgba(0,0,0,0.8); padding: 10px 30px; border-radius: 50px; border: 1px solid #4a90e2; display: inline-block; }
+        #choice-container { display: flex; justify-content: center; gap: 10px; }
+        .choice-btn { padding: 15px; font-size: 20px; cursor: pointer; border-radius: 12px; border: none; background: #2c3e50; color: white; box-shadow: 0 5px 0 #1a252f; flex: 1; max-width: 100px; }
+
+        #joystick-container { position: fixed; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; display: none; z-index: 20; border: 2px solid rgba(255,255,255,0.1); }
+        #joystick-knob { position: absolute; width: 50px; height: 50px; background: rgba(74,144,226,0.6); border-radius: 50%; left: 35px; top: 35px; }
+        
         sup { font-size: 0.6em; }
     </style>
 </head>
@@ -37,32 +59,40 @@
 
 <div id="overlay">
     <div class="panel">
-        <h1 style="color: #4a90e2; margin: 0 0 20px 0;">MATH SURVIVOR</h1>
-        <input type="text" id="playerName" placeholder="ระบุชื่อผู้กล้า" maxlength="10">
-        
-        <p style="margin-bottom: 10px; font-size: 14px;">เลือกความยากเพื่อเริ่ม (คะแนนจะแยกอันดับกัน)</p>
-        <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+        <h1 style="color: #4a90e2; margin: 0 0 10px 0;">MATH SURVIVOR</h1>
+        <input type="text" id="playerName" placeholder="ชื่อผู้กล้า" maxlength="10">
+        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
             <button class="mode-btn easy" onclick="initGame('easy')">EASY</button>
             <button class="mode-btn medium" onclick="initGame('medium')">NORMAL</button>
             <button class="mode-btn hard" onclick="initGame('hard')">HARD</button>
         </div>
-
         <div class="rank-tabs">
-            <div class="tab active" id="tab-easy" onclick="switchTab('easy')">Easy Rank</div>
-            <div class="tab" id="tab-medium" onclick="switchTab('medium')">Normal Rank</div>
-            <div class="tab" id="tab-hard" onclick="switchTab('hard')">Hard Rank</div>
+            <div class="tab active" onclick="switchTab('easy', event)">Easy Rank</div>
+            <div class="tab" onclick="switchTab('medium', event)">Norm Rank</div>
+            <div class="tab" onclick="switchTab('hard', event)">Hard Rank</div>
         </div>
-        <table id="leaderboard">
-            <thead><tr><th>NAME</th><th>SCORE</th></tr></thead>
-            <tbody id="rank-data"></tbody>
-        </table>
+        <table id="leaderboard"><tbody id="rank-data"></tbody></table>
     </div>
 </div>
 
-<div id="hud">
-    <div style="font-size: 24px;">MODE: <span id="cur-mode-ui">-</span> | SCORE: <span id="score-val">0</span></div>
-    <div id="msg" style="color: #e74c3c; font-size: 20px;"></div>
+<div id="game-over-screen">
+    <div class="panel" style="border-color: #e74c3c;">
+        <h1 style="color: #e74c3c; margin: 0;">GAME OVER</h1>
+        <p style="opacity: 0.7; margin-bottom: 20px;">ความพยายามของคุณสิ้นสุดลงแล้ว</p>
+        
+        <div style="background: #0f0f12; padding: 20px; border-radius: 15px; margin-bottom: 10px;">
+            <div style="font-size: 14px; color: #4a90e2;">ผู้เล่น: <span id="final-name" style="color:white">-</span></div>
+            <div style="font-size: 40px; font-weight: 600;" id="final-score">0</div>
+            <div style="font-size: 14px; opacity: 0.5;">คะแนนรวมทั้งหมด</div>
+        </div>
+
+        <button class="btn btn-restart" onclick="restartGame()">ลองใหม่อีกครั้ง</button>
+        <p style="font-size: 12px; margin-top: 15px; opacity: 0.5; cursor: pointer;" onclick="location.reload()">กลับหน้าเมนูหลัก</p>
+    </div>
 </div>
+
+<div id="hud">SCORE: <span id="score-val">0</span></div>
+<div id="notif-container"></div>
 
 <div id="question-zone">
     <div id="question-display"></div>
@@ -73,6 +103,7 @@
     </div>
 </div>
 
+<div id="joystick-container"><div id="joystick-knob"></div></div>
 <canvas id="gameCanvas"></canvas>
 
 <script>
@@ -80,62 +111,99 @@
     const ctx = canvas.getContext('2d');
     const WORLD_SIZE = 2000;
     let view = { x: 0, y: 0 }, score = 0, currentDifficulty = 'easy', pName = "";
-    let player = { x: 1000, y: 1000, size: 25, speed: 5, stun: 0, powerUp: 0 };
+    let player = { x: 1000, y: 1000, size: 20, speed: 5, stun: 0, powerUp: 0 };
     let enemies = [], items = [], choices = [], currentAns = 0, gameOver = false, keys = {};
-    let freezeTimer = 0, displayedTab = 'easy';
+    let freezeTimer = 0, animationFrameId;
 
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-    window.dispatchEvent(new Event('resize'));
-    updateLeaderboardUI('easy');
-
-    function switchTab(diff) {
-        displayedTab = diff;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(`tab-${diff}`).classList.add('active');
-        updateLeaderboardUI(diff);
+    function showNotification(text, color = "#4a90e2") {
+        const container = document.getElementById('notif-container');
+        const notif = document.createElement('div');
+        notif.className = 'notif';
+        notif.style.borderColor = color;
+        notif.innerText = text;
+        container.appendChild(notif);
+        setTimeout(() => notif.remove(), 2500);
     }
 
+    // Joystick Logic
+    let stick = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
+    const joystick = document.getElementById('joystick-container');
+    const knob = document.getElementById('joystick-knob');
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    resize();
+    updateLeaderboardUI('easy');
+
     function initGame(diff) {
-        pName = document.getElementById('playerName').value || "Guest";
+        pName = document.getElementById('playerName').value || "ผู้กล้าไร้นาม";
         currentDifficulty = diff;
         document.getElementById('overlay').style.display = 'none';
+        document.getElementById('game-over-screen').style.display = 'none';
         document.getElementById('question-zone').style.display = 'block';
-        document.getElementById('cur-mode-ui').innerText = diff.toUpperCase();
         canvas.style.display = 'block';
-        
         score = 0; enemies = []; items = []; gameOver = false;
         player.x = 1000; player.y = 1000;
-        
         generateQuestion();
         spawnEnemy();
         spawnItem();
+        showNotification("🏁 เริ่มเกม! สู้ๆ นะ " + pName, "#2ecc71");
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         draw();
     }
+
+    function restartGame() {
+        initGame(currentDifficulty);
+    }
+
+    // Touch Controls
+    window.addEventListener('touchstart', e => {
+        if (gameOver || document.getElementById('overlay').style.display !== 'none') return;
+        if (e.target.classList.contains('choice-btn')) return;
+        stick.active = true;
+        joystick.style.display = 'block';
+        const rect = joystick.getBoundingClientRect();
+        stick.startX = rect.left + rect.width/2;
+        stick.startY = rect.top + rect.height/2;
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+        if (!stick.active) return;
+        const touch = e.touches[0];
+        let dx = touch.clientX - stick.startX;
+        let dy = touch.clientY - stick.startY;
+        const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
+        const angle = Math.atan2(dy, dx);
+        stick.moveX = Math.cos(angle) * (dist/45);
+        stick.moveY = Math.sin(angle) * (dist/45);
+        knob.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => {
+        stick.active = false; stick.moveX = 0; stick.moveY = 0;
+        knob.style.transform = `translate(0px, 0px)`;
+    });
 
     function generateQuestion() {
         let n, qHTML; const r = Math.random();
         if (currentDifficulty === 'easy') {
-            n = Math.floor(Math.random() * 12) + 1;
-            if (r < 0.6) { qHTML = `${n}<sup>2</sup>`; currentAns = n*n; }
-            else { qHTML = `&radic;${n*n}`; currentAns = n; }
-        } else if (currentDifficulty === 'medium') {
-            if (r < 0.5) { // Multiplication of same base
-                let b = Math.floor(Math.random() * 2) + 2; 
-                let p1 = Math.floor(Math.random() * 3) + 1, p2 = Math.floor(Math.random() * 2) + 1;
+            n = Math.floor(Math.random() * 10) + 1;
+            qHTML = r < 0.5 ? `${n}<sup>2</sup>` : `&radic;${n*n}`;
+            currentAns = r < 0.5 ? n*n : n;
+        } else {
+            if (r < 0.4) {
+                n = [4, 8, 9, 16, 27][Math.floor(Math.random()*5)];
+                let is3 = (n === 8 || n === 27);
+                qHTML = `${n}<sup>1/${is3?3:2}</sup>`; currentAns = is3 ? (n===8?2:3) : Math.sqrt(n);
+            } else {
+                let b = Math.floor(Math.random()*2)+2; let p1 = Math.floor(Math.random()*2)+1, p2 = Math.floor(Math.random()*2)+1;
                 qHTML = `${b}<sup>${p1}</sup> &sdot; ${b}<sup>${p2}</sup>`; currentAns = Math.pow(b, p1+p2);
-            } else { // Fractional 1/2
-                n = [16, 25, 36, 49, 64][Math.floor(Math.random()*5)];
-                qHTML = `${n}<sup>1/2</sup>`; currentAns = Math.sqrt(n);
             }
-        } else { // HARD
-            if (r < 0.4) { n = [8, 27, 64, 125][Math.floor(Math.random()*4)]; qHTML = `${n}<sup>1/3</sup>`; currentAns = (n===8)?2:(n===27)?3:(n===64)?4:5; }
-            else if (r < 0.7) { let b = 2; let p1 = Math.floor(Math.random()*3)+4; let p2 = Math.floor(Math.random()*2)+1; qHTML = `${b}<sup>${p1}</sup> / ${b}<sup>${p2}</sup>`; currentAns = Math.pow(b, p1-p2); }
-            else { n = Math.floor(Math.random()*5)+2; qHTML = `(${n}<sup>2</sup>)<sup>2</sup>`; currentAns = Math.pow(n,4); }
         }
         document.getElementById('question-display').innerHTML = qHTML + " = ?";
         let set = new Set([currentAns]);
         while(set.size < 3) {
-            let f = currentAns + (Math.floor(Math.random()*16)-8);
+            let f = currentAns + (Math.floor(Math.random()*10)-5);
             if(f > 0 && f !== currentAns) set.add(f);
         }
         choices = Array.from(set).sort(() => Math.random() - 0.5);
@@ -145,100 +213,72 @@
     function checkAnswer(idx) {
         if(player.stun > 0 || gameOver) return;
         if(choices[idx] === currentAns) {
-            score += (currentDifficulty === 'hard' ? 200 : currentDifficulty === 'medium' ? 100 : 50);
-            enemies = []; generateQuestion();
-            if(score % 1000 === 0) showMsg("WARNING: BOSS ALERT!", 2000);
-        } else {
-            player.stun = 45;
-            document.getElementById('question-display').style.borderColor = "red";
-            setTimeout(()=>document.getElementById('question-display').style.borderColor = "#4a90e2", 500);
+            score += 100; enemies = []; generateQuestion();
+            if(score % 500 === 0) showNotification("🔥 COMBO! " + score + " แต้ม", "#f1c40f");
+        } else { 
+            player.stun = 40; 
+            showNotification("❌ ผิด! ติดสถานะมึน", "#e74c3c");
+            if(navigator.vibrate) navigator.vibrate(50);
         }
     }
-
-    function spawnEnemy() {
-        if(gameOver) return;
-        const ang = Math.random() * Math.PI * 2;
-        let boss = (score > 0 && score % 1000 === 0);
-        enemies.push({
-            x: player.x + Math.cos(ang) * 750, y: player.y + Math.sin(ang) * 750,
-            speed: (boss ? 5.5 : 2.5) + (score/12000), size: boss ? 30 : 12
-        });
-        setTimeout(spawnEnemy, Math.max(180, 1000 - (score/25)));
-    }
-
-    function spawnItem() {
-        if(gameOver) return;
-        items.push({ x: Math.random()*WORLD_SIZE, y: Math.random()*WORLD_SIZE, type: Math.random()>0.5?'speed':'freeze' });
-        setTimeout(spawnItem, 7500);
-    }
-
-    window.addEventListener('keydown', e => keys[e.code] = true);
-    window.addEventListener('keyup', e => keys[e.code] = false);
 
     function update() {
         if(gameOver) return;
-        if(player.stun <= 0) {
-            let s = player.powerUp > 0 ? player.speed * 1.7 : player.speed;
-            if(keys['KeyW']) player.y -= s; if(keys['KeyS']) player.y += s;
-            if(keys['KeyA']) player.x -= s; if(keys['KeyD']) player.x += s;
+        let s = (player.powerUp > 0 ? player.speed * 1.6 : player.speed);
+        let mx = 0, my = 0;
+        if(keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD']) {
+            joystick.style.display = 'none'; 
+            if(keys['KeyW']) my = -1; if(keys['KeyS']) my = 1;
+            if(keys['KeyA']) mx = -1; if(keys['KeyD']) mx = 1;
+        } else if (stick.active) {
+            mx = stick.moveX; my = stick.moveY;
         }
-        player.x = Math.max(25, Math.min(WORLD_SIZE-25, player.x));
-        player.y = Math.max(25, Math.min(WORLD_SIZE-25, player.y));
+
+        if(player.stun <= 0) { player.x += mx * s; player.y += my * s; }
+        player.x = Math.max(20, Math.min(WORLD_SIZE-20, player.x));
+        player.y = Math.max(20, Math.min(WORLD_SIZE-20, player.y));
         if(player.powerUp > 0) player.powerUp--;
         if(player.stun > 0) player.stun--;
         if(freezeTimer > 0) freezeTimer--;
         view.x = player.x - canvas.width/2; view.y = player.y - canvas.height/2;
 
-        enemies.forEach((en) => {
+        enemies.forEach(en => {
             if(freezeTimer <= 0) {
                 let dx = player.x - en.x, dy = player.y - en.y, d = Math.sqrt(dx*dx+dy*dy);
                 en.x += (dx/d)*en.speed; en.y += (dy/d)*en.speed;
-                if(d < (player.size + en.size-5) && player.powerUp <= 0) endGame();
+                if(d < 25 && player.powerUp <= 0) endGame();
             }
         });
+
         items.forEach((it, i) => {
             if(Math.sqrt((player.x-it.x)**2 + (player.y-it.y)**2) < 40) {
-                if(it.type === 'speed') player.powerUp = 300; else freezeTimer = 180;
+                if(it.type === 'speed') { player.powerUp = 300; showNotification("⚡ SPEED BOOST!", "#f1c40f"); }
+                else { freezeTimer = 180; showNotification("❄️ FREEZE!", "#81ecec"); }
                 items.splice(i, 1);
             }
         });
         document.getElementById('score-val').innerText = score;
     }
 
-    function endGame() {
-        gameOver = true;
-        saveScore(currentDifficulty, pName, score);
-        alert(`GAME OVER [${currentDifficulty.toUpperCase()}]\nScore: ${score}`);
-        location.reload();
+    function spawnEnemy() {
+        if(gameOver) return;
+        const ang = Math.random()*Math.PI*2;
+        enemies.push({ x: player.x+Math.cos(ang)*600, y: player.y+Math.sin(ang)*600, speed: 2.2 + (score/10000), size: 12 });
+        setTimeout(spawnEnemy, Math.max(250, 1000 - (score/20)));
     }
 
-    function saveScore(diff, name, score) {
-        let key = `mathRank_${diff}`;
-        let ranks = JSON.parse(localStorage.getItem(key) || "[]");
-        ranks.push({name, score});
-        ranks.sort((a,b) => b.score - a.score);
-        localStorage.setItem(key, JSON.stringify(ranks.slice(0, 5)));
+    function spawnItem() {
+        if(gameOver) return;
+        items.push({ x: Math.random()*WORLD_SIZE, y: Math.random()*WORLD_SIZE, type: Math.random()>0.5?'speed':'freeze' });
+        setTimeout(spawnItem, 8000);
     }
-
-    function updateLeaderboardUI(diff) {
-        const ranks = JSON.parse(localStorage.getItem(`mathRank_${diff}`) || "[]");
-        const tbody = document.getElementById('rank-data');
-        tbody.innerHTML = ranks.map((r, i) => `
-            <tr class="${i === 0 ? 'gold' : ''}">
-                <td>${i+1}. ${r.name}</td>
-                <td>${r.score}</td>
-            </tr>
-        `).join('') || "<tr><td colspan='2' style='opacity:0.5'>No record yet</td></tr>";
-    }
-
-    function showMsg(txt, t) { document.getElementById('msg').innerText = txt; setTimeout(()=>document.getElementById('msg').innerText="", t); }
 
     function draw() {
         update();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save(); ctx.translate(-view.x, -view.y);
         ctx.strokeStyle = "#ff4757"; ctx.lineWidth = 10; ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
-        ctx.strokeStyle = "#222"; ctx.lineWidth = 1;
+        ctx.strokeStyle = "#222"; 
         for(let i=0; i<=WORLD_SIZE; i+=100) {
             ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,WORLD_SIZE); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(WORLD_SIZE,i); ctx.stroke();
@@ -248,14 +288,49 @@
             ctx.beginPath(); ctx.arc(it.x, it.y, 15, 0, Math.PI*2); ctx.fill();
         });
         enemies.forEach(en => {
-            ctx.fillStyle = freezeTimer > 0 ? "#81ecec" : (en.size > 20 ? "#ff9f43" : "#e74c3c");
+            ctx.fillStyle = freezeTimer > 0 ? "#81ecec" : "#e74c3c";
             ctx.beginPath(); ctx.arc(en.x, en.y, en.size, 0, Math.PI*2); ctx.fill();
         });
-        ctx.fillStyle = player.powerUp > 0 ? "#f1c40f" : (player.stun > 0 ? "#ff4757" : "#4a90e2");
+        ctx.fillStyle = player.powerUp > 0 ? "#f1c40f" : (player.stun > 0 ? "#555" : "#4a90e2");
         ctx.fillRect(player.x-15, player.y-15, 30, 30);
         ctx.restore();
-        if(!gameOver) requestAnimationFrame(draw);
+        if(!gameOver) animationFrameId = requestAnimationFrame(draw);
     }
+
+    function endGame() {
+        gameOver = true;
+        saveScore(currentDifficulty, pName, score);
+        
+        // แสดง Game Over UI แทน alert
+        document.getElementById('final-name').innerText = pName;
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('game-over-screen').style.display = 'flex';
+        document.getElementById('question-zone').style.display = 'none';
+        joystick.style.display = 'none';
+    }
+
+    function saveScore(diff, name, score) {
+        let key = `mathRank_${diff}`;
+        let ranks = JSON.parse(localStorage.getItem(key) || "[]");
+        ranks.push({name, score});
+        ranks.sort((a,b) => b.score - a.score);
+        localStorage.setItem(key, JSON.stringify(ranks.slice(0, 5)));
+        updateLeaderboardUI(currentDifficulty);
+    }
+
+    function updateLeaderboardUI(diff) {
+        const ranks = JSON.parse(localStorage.getItem(`mathRank_${diff}`) || "[]");
+        document.getElementById('rank-data').innerHTML = ranks.map((r, i) => `<tr><td>${i+1}. ${r.name}</td><td>${r.score}</td></tr>`).join('') || "<tr><td>ยังไม่มีสถิติ</td></tr>";
+    }
+
+    function switchTab(diff, e) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        updateLeaderboardUI(diff);
+    }
+
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
 </script>
 </body>
 </html>
